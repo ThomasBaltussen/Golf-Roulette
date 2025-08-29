@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Golf Roulette – Fresh Start</title>
+  <style>
+    :root{
+      /* Neon casino palette */
+      --bg:#060913; --card:#0b0f1f; --muted:#141a2e; --text:#eef3ff;
+      --violet:#8a7dff; --cyan:#29e3ff; --magenta:#ff3fb0; --gold:#ffcc4d;
+      --danger:#ff6b6b; --good:#9bffb3;
+      /* Golf course palette */
+      --sky1:#84c8ff; --sky2:#cfe8ff; --grass1:#1f7a2e; --grass2:#2fa144;
+      --fairway:#7ed957; --rough:#2f9e44; --water1:#2cb3ff; --water2:#0077b6; --cliff:#3f4d67;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;color:var(--text);
+      background: radial-gradient(ellipse at center, #8B0000 0%, #660000 40%, #4A0000 70%, #2D0000 100%); overflow-x:hidden; min-height:100vh;
+    }
+    /* Casino/Arcade background elements */
+    body::before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at 50% 50%, rgba(255,215,0,0.1) 0%, transparent 50%), radial-gradient(circle at 20% 20%, rgba(255,215,0,0.05) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,215,0,0.05) 0%, transparent 40%);pointer-events:none}
+    body::after{content:"";position:fixed;inset:0;z-index:-1;background:repeating-conic-gradient(from 0deg, transparent 0deg, rgba(255,215,0,0.03) 1deg, transparent 2deg);pointer-events:none}
+
+    /* Dopamine neon vibes */
+    @keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 16px rgba(41,227,255,.45)) drop-shadow(0 0 22px rgba(255,63,176,.35))}50%{filter:drop-shadow(0 0 24px rgba(41,227,255,.75)) drop-shadow(0 0 30px rgba(255,63,176,.55))}}
+    @keyframes marquee{
+      0%{background-position:0 0}
+      100%{background-position:400px 0}
+    }
+    /* Remove old SVG scene (no longer used) */
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
+    @media (max-width: 980px){.grid{grid-template-columns: 1fr;}}
+
+    .card{background:linear-gradient(180deg,#0e1430,#0a0f20);border:1px solid rgba(99,120,255,.22);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.55), 0 0 0 1px rgba(41,227,255,.05) inset, 0 0 40px rgba(138,125,255,.12) inset;padding:18px}
+    .header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+    .logo{width:42px;height:42px;border-radius:12px;background:radial-gradient(circle at 30% 30%, #54a0ff, #6c5ce7 60%, #1e272e);box-shadow:inset 0 0 18px rgba(255,255,255,.15)}
+    h1.title{margin:0;letter-spacing:.02em;line-height:1.02;font-weight:900;text-transform:uppercase;text-align:center;
+      font-size:clamp(44px,7.5vw,108px);
+      color:#ffffff;
+      -webkit-text-stroke:2px #000;text-stroke:2px #000;
+      text-shadow:0 4px 8px rgba(0,0,0,.4);
+      border-radius:20px;
+      font-stretch:expanded;
+      letter-spacing:-0.02em;
+      font-family:'Arial Rounded MT Bold', 'Arial', sans-serif;
+    }
+
+    /* Top-right logo */
+    .brand-logo{position:fixed;top:12px;right:12px;height:clamp(40px,7vw,86px);width:auto;z-index:1000;pointer-events:none;filter:brightness(0.9) contrast(1.1) saturate(1.2) drop-shadow(0 4px 12px rgba(0,0,0,.4))}
+
+
+    .title .club-icon{display:inline-block;width:.62em;height:1.05em;vertical-align:-.06em;margin:0 .02em}
+    .title .club-icon svg{display:block;width:100%;height:100%}
+    .title .thin-stroke{-webkit-text-stroke:.8px #000; paint-order: stroke fill}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .sub{opacity:.8;font-size:13px}
+    .status{font-size:12px;opacity:.75;margin-top:4px}
+
+    .wheel-wrap{display:grid;place-items:center;padding:18px;position:relative}
+    /* LED strip like a slot machine */
+    .wheel-wrap:before{content:"";position:absolute;inset:6px;z-index:0;border-radius:26px;padding:2px;background:
+      repeating-linear-gradient(90deg, rgba(41,227,255,.85) 0 6px, rgba(255,63,176,.85) 6px 12px, rgba(255,204,77,.9) 12px 18px, rgba(138,125,255,.9) 18px 24px);
+      -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude;
+      animation:marquee 6s linear infinite; opacity:.35}
+    canvas{width:100%;max-width:540px;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 55%, #0f1533, #090f24 65%);border:1px solid rgba(99,120,255,.25);box-shadow:0 20px 60px rgba(0,0,0,.6), 0 0 60px 10px rgba(255,63,176,.12), 0 0 80px 18px rgba(41,227,255,.08)}
+    .tee{position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:38px;height:38px;pointer-events:none}
+    .tee:before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-right:18px solid var(--magenta);filter:drop-shadow(0 2px 8px rgba(255,63,176,.75));}
+    .tee:after{content:"";position:absolute;left:16px;top:50%;transform:translateY(-50%);width:7px;height:28px;background:linear-gradient(180deg,#f9e0a6,#d9a85b);border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+
+    /* Club swing animation */
+    @keyframes clubSwing{0%{transform:translate(-120%,40%) rotate(-50deg)} 60%{transform:translate(-18%,6%) rotate(6deg)} 100%{transform:translate(-8%,-6%) rotate(14deg)}}
+    .swing-club{position:absolute;left:50%;top:62%;width:220px;height:80px;transform-origin:10% 60%;pointer-events:none;z-index:3;animation:clubSwing 360ms cubic-bezier(.2,.9,.2,1) forwards}
+
+    .controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+    .btn{padding:12px 16px;border-radius:14px;border:1px solid rgba(99,120,255,.25);background:linear-gradient(180deg,#121a3b,#0e1531);color:var(--text);cursor:pointer;font-weight:800;letter-spacing:.3px;transition:.2s;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(41,227,255,.45);animation:glowPulse 1.8s ease-in-out infinite}
+    .btn.primary{background:linear-gradient(180deg,#233075,#151d4d);border-color:rgba(138,125,255,.55);box-shadow:0 0 0 1px rgba(138,125,255,.45) inset}
+    .btn.danger{border-color:#5a2b3b;background:linear-gradient(180deg,#3a1a26,#231019);color:#ffd7d7}
+
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#101629;border:1px solid #263055;font-size:12px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{padding:6px 10px;border-radius:999px;background:#0f1530;border:1px solid #2a3562;font-size:12px;opacity:.9}
+
+    .history{max-height:160px;overflow:auto}
+    .history .item{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid #23305b;background:linear-gradient(180deg,#12182b,#0e1424);margin-bottom:8px}
+    .winner{font-weight:800;color:var(--gold)}
+    .note{font-size:12px;opacity:.75}
+    .footer{opacity:.7;font-size:12px;text-align:center;margin-top:14px}
+
+    .check{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid #212845;background:linear-gradient(180deg,#12182b,#0e1424);margin-bottom:8px}
+    .check input{accent-color:#52e1ff}
+    .tag{font-size:11px;opacity:.85;padding:4px 8px;border:1px solid #2a3458;border-radius:999px}
+    /* Bag Manager scrollable list (12 rows) */
+    .club-list{max-height:calc(12 * 48px);overflow:auto;padding-right:4px}
+    /* Stats and tips styling */
+    .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
+    .stat-item{text-align:center;padding:12px;background:linear-gradient(180deg,#12182b,#0e1424);border:1px solid #212845;border-radius:12px}
+    .stat-number{font-size:24px;font-weight:900;color:var(--gold);margin-bottom:4px}
+    .stat-label{font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.5px}
+    .tips-list{margin-top:8px}
+    .tip-item{padding:8px 12px;margin-bottom:6px;background:linear-gradient(180deg,#12182b,#0e1424);border:1px solid #212845;border-radius:10px;font-size:13px;opacity:.9}
+
+    /* Golf challenge and lucky shot styling */
+    .challenge-info{margin-top:8px}
+    .challenge-text{font-size:13px;margin-bottom:12px;color:var(--text)}
+    .progress-bar{width:100%;height:8px;background:#0e1424;border-radius:4px;overflow:hidden;margin-bottom:8px}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#ffcc4d,#ff8c00);transition:width 0.3s ease}
+    .challenge-status{font-size:12px;text-align:center;color:var(--gold);font-weight:600}
+    .lucky-shot{margin-top:8px;text-align:center}
+    .shot-description{font-size:13px;margin-bottom:12px;color:var(--text)}
+    .shot-progress{display:flex;justify-content:center;gap:12px;margin-bottom:12px}
+    .shot-dot{font-size:20px;color:#2a3562;transition:color 0.3s ease}
+    .shot-dot.active{color:var(--gold)}
+    .shot-dot.completed{color:#4CAF50}
+  </style>
+</head>
+<body>
+
+  <img src="assets/LOGO_transparent.png" alt="Logo" class="brand-logo">
+  
+
+  
+  <div class="container">
+      <div class="header" style="justify-content:center;text-align:center">
+        <h1 class="title">Golf Goons</h1>
+      </div>
+
+    <div class="grid">
+      <!-- WHEEL SIDE -->
+      <section class="card">
+        <div class="chips" style="align-items:center;display:flex;gap:10px;flex-wrap:wrap">
+          <div class="pill">Selected clubs: <strong id="selCount" style="margin-left:6px">0</strong></div>
+          <div class="chips" id="activeChips"></div>
+        </div>
+        <div class="wheel-wrap">
+          <canvas id="wheel" width="800" height="800" aria-label="Roulette wheel"></canvas>
+          <div class="tee" aria-hidden="true"></div>
+        </div>
+        <div class="controls">
+          <select id="profileSelect" class="btn" aria-label="Select player profile">
+            <option value="Martijn">Martijn</option>
+            <option value="Thomas">Thomas</option>
+            <option value="Pieter">Pieter</option>
+            <option value="Julian">Julian</option>
+          </select>
+          <button id="spinBtn" class="btn primary" aria-label="Spin the wheel">🎯 Spin</button>
+          <button id="clearHistory" class="btn">Clear history</button>
+          <button id="resetBtn" class="btn danger">Reset to defaults</button>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="row"><div class="tag">Result</div><div class="note">(also logged below)</div></div>
+          <h2 id="result" class="winner">—</h2>
+          <div class="history" id="history"></div>
+        </div>
+
+        <!-- Session Stats moved to left side -->
+        <div class="card" style="margin-top:14px">
+          <div class="row">
+            <div class="field" style="flex:1">
+              <label>Session Stats</label>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-number" id="totalSpins">0</div>
+                  <div class="stat-label">Total Spins</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number" id="mostUsedClub">-</div>
+                  <div class="stat-label">Most Used</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number" id="uniqueClubs">0</div>
+                  <div class="stat-label">Unique Clubs</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+
+        
+        <div class="footer">Tip: your bag & presets are saved locally (browser storage).</div>
+      </section>
+
+      <!-- CONFIG SIDE -->
+      <aside class="card" style="display:flex;flex-direction:column;height:100%">
+        <!-- Club options at the top -->
+        <div class="club-options-section">
+          <div class="chips" style="align-items:center;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div class="tag">Bag Manager</div>
+            <button id="addCustom" class="btn" style="margin-left:auto">+ Add custom club</button>
+          </div>
+          <div class="club-list" id="clubList"></div>
+        </div>
+
+
+
+
+
+        <!-- Bottom section with cards aligned to bottom -->
+        <div class="bottom-section" style="margin-top:auto">
+          <div class="card" style="margin-top:10px">
+            <div class="row">
+              <div class="field" style="flex:1">
+                <label>Quick Presets</label>
+                <div class="chips">
+                  <button class="btn" data-preset="full">Full bag</button>
+                  <button class="btn" data-preset="irons">Irons only</button>
+                  <button class="btn" data-preset="wedges">Wedges</button>
+                  <button class="btn" data-preset="putter">Putter only</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:10px">
+            <div class="row">
+              <div class="field" style="flex:1">
+                <label>Save your own preset</label>
+                <div class="row" style="gap:8px;align-items:center">
+                  <input id="presetName" type="text" placeholder="e.g. Par 3 bag" style="flex:1;padding:10px 12px;border-radius:12px;border:1px solid #2a3562;background:#0e1330;color:var(--text)"/>
+                  <button id="savePreset" class="btn primary">Save current selection</button>
+                </div>
+                <div class="note" style="margin-top:6px">Toggle clubs above, then name & save. Presets persist locally.</div>
+                <div class="chips" id="customPresets" style="margin-top:8px"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:10px">
+            <div class="row">
+              <div class="field" style="flex:1">
+                <label>Quick Tips</label>
+                <div class="tips-list">
+                  <div class="tip-item">🎯 Use spacebar for quick spin</div>
+                  <div class="tip-item">💾 Save presets for different courses</div>
+                  <div class="tip-item">👥 Switch profiles for different players</div>
+                  <div class="tip-item">🔄 Clear history to start fresh</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // =====================
+    //  Data & Persistence
+    // =====================
+    const DEFAULT_CLUBS = [
+      "Driver","3W","5W","3H","4H",
+      "4i","5i","6i","7i","8i","9i",
+      "PW","50°","54°","58°","Putter"
+    ];
+
+    const store = {
+      load(){
+        try{
+          const saved = JSON.parse(localStorage.getItem('golfRoulette_v3')||'{}');
+          // Upgrade and normalize clubs to [{name, on}]
+          let clubs;
+          if(Array.isArray(saved.clubs)){
+            if(saved.clubs.length>0 && typeof saved.clubs[0]==='string'){
+              clubs = saved.clubs.map(n=>({name:n, on:true}));
+            }else{
+              clubs = saved.clubs.map(c=>({name: c.name ?? String(c), on: c.on ?? true}));
+            }
+          }else{
+            clubs = DEFAULT_CLUBS.map(n=>({name:n,on:true}));
+          }
+
+          // Profiles: migrate flat history to profiles if needed
+          const DEFAULT_PROFILES = ["Martijn","Thomas","Pieter","Julian"];
+          let profiles = saved.profiles;
+          if(!profiles){
+            profiles = Object.fromEntries(DEFAULT_PROFILES.map(n=>[n, []]));
+            const oldHist = Array.isArray(saved.history) ? saved.history : [];
+            profiles[DEFAULT_PROFILES[0]] = oldHist; // migrate old history to first profile
+          }
+
+          const activeProfile = saved.activeProfile && profiles[saved.activeProfile] ? saved.activeProfile : "Martijn";
+
+          return {
+            clubs,
+            profiles,
+            activeProfile,
+            customPresets: Array.isArray(saved.customPresets) ? saved.customPresets : [] // [{name, names[]}]
+          };
+        }catch(e){
+          return {clubs: DEFAULT_CLUBS.map(n=>({name:n,on:true})), profiles:{Martijn:[],Thomas:[],Pieter:[],Julian:[]}, activeProfile:"Martijn", customPresets:[]}
+        }
+      },
+      save(obj){ localStorage.setItem('golfRoulette_v3', JSON.stringify(obj)); }
+    }
+
+    let state = store.load();
+
+    // =====================
+    //  Elements
+    // =====================
+    const wheelCanvas = document.getElementById('wheel');
+    const ctx = wheelCanvas.getContext('2d');
+    // Offscreen base for smooth rotation
+    const wheelBase = document.createElement('canvas');
+    wheelBase.width = wheelCanvas.width; wheelBase.height = wheelCanvas.height;
+    const baseCtx = wheelBase.getContext('2d');
+    const clubList = document.getElementById('clubList');
+    const activeChips = document.getElementById('activeChips');
+    const selCountEl = document.getElementById('selCount');
+    const resultEl = document.getElementById('result');
+    const historyEl = document.getElementById('history');
+    const profileSelect = document.getElementById('profileSelect');
+    const statusEl = document.getElementById('status');
+    const presetNameInput = document.getElementById('presetName');
+    const savePresetBtn = document.getElementById('savePreset');
+    const customPresetsEl = document.getElementById('customPresets');
+    // FX overlay for fireworks
+    let fxCanvas=null, fxCtx=null, FX_DPR=1;
+    function ensureFxCanvas(){
+      if(fxCanvas) return;
+      fxCanvas = document.createElement('canvas');
+      fxCanvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9998;';
+      document.body.appendChild(fxCanvas); fxCtx = fxCanvas.getContext('2d');
+      const resize=()=>{ FX_DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1)); fxCanvas.width=innerWidth*FX_DPR; fxCanvas.height=innerHeight*FX_DPR; fxCanvas.style.width=innerWidth+'px'; fxCanvas.style.height=innerHeight+'px'; };
+      resize(); window.addEventListener('resize', resize);
+    }
+
+    // =====================
+    //  Helpers
+    // =====================
+    const TAU = Math.PI*2;
+    function getActiveClubs(){ return state.clubs.filter(c=>c.on).map(c=>c.name); }
+    function toast(text){
+      const t = document.createElement('div'); t.textContent=text; t.style.position='fixed'; t.style.left='50%'; t.style.top='18px'; t.style.transform='translateX(-50%)'; t.style.background='#10172b'; t.style.border='1px solid #2a3562'; t.style.padding='10px 14px'; t.style.borderRadius='12px'; t.style.zIndex=9999; t.style.boxShadow='0 10px 24px rgba(0,0,0,.35), 0 0 30px rgba(255,204,77,.35)'; document.body.appendChild(t); setTimeout(()=>{t.style.opacity='0'; t.style.transition='.25s'; setTimeout(()=>t.remove(),260)}, 1200);
+    }
+
+    // =====================
+    //  Wheel Drawing (by rotation)
+    // =====================
+    function drawGolfBallTexture(drawCtx, cx, cy, r, rotation){
+      // Base golf ball shading (cooler whites)
+      const grad = drawCtx.createRadialGradient(cx - r*0.28, cy - r*0.28, r*0.18, cx, cy, r);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.55, '#eef3fb');
+      grad.addColorStop(1, '#cfd8e6');
+      drawCtx.beginPath(); drawCtx.arc(cx, cy, r, 0, TAU); drawCtx.fillStyle = grad; drawCtx.fill();
+
+      // Clip to circle for dimples
+      drawCtx.save();
+      drawCtx.beginPath(); drawCtx.arc(cx, cy, r-4, 0, TAU); drawCtx.clip();
+
+      // Dimples in a staggered grid, with highlight + shadow (rotates with wheel)
+      drawCtx.save();
+      drawCtx.translate(cx, cy);
+      drawCtx.rotate(rotation);
+      const spacing = 24; const dimpleRadius = 7;
+      for(let y = -r; y <= r; y += spacing){
+        const offset = ((Math.round((y - (-r))/spacing)) % 2) ? spacing/2 : 0;
+        for(let x = -r; x <= r; x += spacing){
+          const px = x + offset; const dist = Math.hypot(px, y);
+          if(dist < r - 12){
+            // Inner shadow (deeper towards bottom-right, light from top-left)
+            const shadow = drawCtx.createRadialGradient(px + dimpleRadius*0.35, y + dimpleRadius*0.35, 1, px, y, dimpleRadius);
+            shadow.addColorStop(0, 'rgba(0,0,0,0.12)');
+            shadow.addColorStop(0.65, 'rgba(0,0,0,0.09)');
+            shadow.addColorStop(1, 'rgba(0,0,0,0.00)');
+            drawCtx.fillStyle = shadow; drawCtx.beginPath(); drawCtx.arc(px, y, dimpleRadius, 0, TAU); drawCtx.fill();
+
+            // Rim highlight (light-facing edge, slight cool tint)
+            const hl = drawCtx.createRadialGradient(px - dimpleRadius*0.9, y - dimpleRadius*0.9, 0.5, px - dimpleRadius*0.2, y - dimpleRadius*0.2, dimpleRadius*0.9);
+            hl.addColorStop(0, 'rgba(255,255,255,0.35)');
+            hl.addColorStop(0.6, 'rgba(210,230,255,0.20)');
+            hl.addColorStop(1, 'rgba(255,255,255,0.00)');
+            drawCtx.fillStyle = hl; drawCtx.beginPath(); drawCtx.arc(px, y, dimpleRadius, 0, TAU); drawCtx.fill();
+          }
+        }
+      }
+      drawCtx.restore();
+
+      // Glossy hotspot
+      drawCtx.globalCompositeOperation = 'lighter';
+      const gloss = drawCtx.createRadialGradient(cx - r*0.42, cy - r*0.42, 2, cx - r*0.30, cy - r*0.30, r*0.35);
+      gloss.addColorStop(0, 'rgba(255,255,255,0.35)');
+      gloss.addColorStop(0.6, 'rgba(255,255,255,0.10)');
+      gloss.addColorStop(1, 'rgba(255,255,255,0.00)');
+      drawCtx.fillStyle = gloss; drawCtx.beginPath(); drawCtx.arc(cx, cy, r, 0, TAU); drawCtx.fill();
+      drawCtx.globalCompositeOperation = 'source-over';
+
+      drawCtx.restore();
+      // Subtle outer rim
+      drawCtx.beginPath(); drawCtx.arc(cx, cy, r, 0, TAU); drawCtx.strokeStyle = '#b9c5d9'; drawCtx.lineWidth = 2; drawCtx.stroke();
+    }
+    function renderWheelBase(){
+      const w = wheelBase.width, h = wheelBase.height; baseCtx.clearRect(0,0,w,h);
+      const r = w/2 - 10; const cx = w/2, cy = h/2;
+      const clubs = getActiveClubs();
+      const n = Math.max(1, clubs.length);
+      const anglePer = TAU/n;
+      // Texture
+      drawGolfBallTexture(baseCtx, cx, cy, r, 0);
+      // Slices + labels
+      for(let i=0;i<n;i++){
+        const start = i*anglePer - Math.PI/2; // 12 o'clock reference at rotation 0
+        baseCtx.beginPath(); baseCtx.moveTo(cx,cy); baseCtx.arc(cx,cy,r,start,start+anglePer,false);
+        baseCtx.fillStyle = `hsl(${(i/n)*360} 80% 52% / .55)`; baseCtx.fill();
+        baseCtx.strokeStyle = 'rgba(0,0,0,.25)'; baseCtx.lineWidth = 2; baseCtx.stroke();
+        baseCtx.save(); baseCtx.translate(cx,cy); baseCtx.rotate(start+anglePer/2);
+        baseCtx.textAlign = 'right'; baseCtx.fillStyle = '#1a2233'; baseCtx.font = '800 24px system-ui, -apple-system, Segoe UI, Roboto';
+        baseCtx.shadowColor = 'rgba(255,255,255,.35)'; baseCtx.shadowBlur = 6;
+        baseCtx.fillText(clubs[i] ?? '—', r-14, 8); baseCtx.restore();
+      }
+      // center hub
+      baseCtx.beginPath(); baseCtx.arc(cx,cy,60,0,TAU); baseCtx.fillStyle = '#0e1426'; baseCtx.fill(); baseCtx.strokeStyle = '#2b375f'; baseCtx.lineWidth = 3; baseCtx.stroke();
+      baseCtx.beginPath(); baseCtx.arc(cx,cy,8,0,TAU); baseCtx.fillStyle = '#ffcc4d'; baseCtx.fill();
+    }
+    function drawWheel(rotation=0){
+      const w = wheelCanvas.width, h = wheelCanvas.height; ctx.clearRect(0,0,w,h);
+      ctx.save(); ctx.translate(w/2, h/2); ctx.rotate(rotation); ctx.drawImage(wheelBase, -w/2, -h/2); ctx.restore();
+    }
+
+    // =====================
+    //  Renderers
+    // =====================
+    function renderList(){
+      clubList.innerHTML = '';
+      state.clubs.forEach((c, idx)=>{
+        const row = document.createElement('label'); row.className = 'check';
+        row.innerHTML = `<input type="checkbox" ${c.on? 'checked':''} data-ix="${idx}"/> <span>${c.name}</span>
+          <span style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn" data-edit="${idx}">✎</button>
+            <button class="btn danger" data-del="${idx}">✕</button>
+          </span>`;
+        clubList.appendChild(row);
+      })
+      selCountEl.textContent = getActiveClubs().length;
+      activeChips.innerHTML = '';
+      getActiveClubs().forEach(n=>{ const ch = document.createElement('span'); ch.className = 'chip'; ch.textContent = n; activeChips.appendChild(ch); })
+    }
+
+    function renderHistory(){
+      historyEl.innerHTML = '';
+      const list = state.profiles[state.activeProfile] || [];
+      [...list].reverse().forEach(h=>{
+        const div = document.createElement('div'); div.className='item';
+        const t = new Date(h.time).toLocaleTimeString();
+        div.innerHTML = `<strong>${h.pick}</strong><span class="note">${t}</span>`;
+        historyEl.appendChild(div);
+      })
+      updateStats();
+    }
+
+    function renderCustomPresets(){
+      customPresetsEl.innerHTML='';
+      state.customPresets.forEach((p, i)=>{
+        const wrap = document.createElement('span'); wrap.className = 'chip'; wrap.style.display='inline-flex'; wrap.style.alignItems='center'; wrap.style.gap='6px';
+        const btn = document.createElement('button'); btn.className='btn'; btn.textContent=p.name; btn.dataset.customPreset=i;
+        const del = document.createElement('button'); del.className='btn danger'; del.textContent='✕'; del.dataset.delPreset=i;
+        wrap.appendChild(btn); wrap.appendChild(del); customPresetsEl.appendChild(wrap);
+      })
+    }
+
+    function updateStats(){
+      const history = state.profiles[state.activeProfile] || [];
+      const totalSpins = history.length;
+      
+      // Calculate most used club
+      const clubCounts = {};
+      history.forEach(h => {
+        clubCounts[h.pick] = (clubCounts[h.pick] || 0) + 1;
+      });
+      const mostUsed = Object.keys(clubCounts).length > 0 
+        ? Object.entries(clubCounts).reduce((a, b) => clubCounts[a[0]] > clubCounts[b[0]] ? a : b)[0]
+        : '-';
+      
+      // Calculate unique clubs used
+      const uniqueClubs = Object.keys(clubCounts).length;
+      
+      // Update the display
+      document.getElementById('totalSpins').textContent = totalSpins;
+      document.getElementById('mostUsedClub').textContent = mostUsed;
+      document.getElementById('uniqueClubs').textContent = uniqueClubs;
+    }
+
+
+
+    // =====================
+    //  Spin Animation (requestAnimationFrame)
+    // =====================
+    let spinning=false; let currentRotation=0;
+    function spinAnimated(){
+      const clubs=getActiveClubs();
+      if(!clubs.length||spinning) return;
+      spinning=true; resultEl.textContent='—';
+
+      // Choose the winner first
+      const pick=clubs[Math.floor(Math.random()*clubs.length)];
+      const n=clubs.length; const anglePer = TAU/n; const targetIndex = clubs.indexOf(pick);
+      const targetCenter = targetIndex*anglePer + anglePer/2; // center of slice
+
+      // Our pointer is at the bottom (6 o'clock), i.e., angle +PI/2.
+      // Compute rotation so the chosen center aligns with +PI/2.
+      const pointerAngle = Math.PI/2;
+      const targetRotation = pointerAngle - targetCenter;
+      const extraSpins = 6 + Math.floor(Math.random()*3);
+      const finalRotation = currentRotation + extraSpins*TAU + (targetRotation - (currentRotation % TAU));
+
+      const duration = 3600; // ms (slightly faster, smoother)
+      const startTime = performance.now();
+      function easeOutCubic(t){ return 1 - Math.pow(1-t,3); }
+      function animate(now){
+        const t = Math.min((now-startTime)/duration, 1);
+        const eased = easeOutCubic(t);
+        const angle = currentRotation + (finalRotation-currentRotation)*eased;
+        drawWheel(angle);
+        if(t<1){ requestAnimationFrame(animate); }
+        else{
+          currentRotation = ((finalRotation % TAU)+TAU)%TAU; // keep within 0..TAU
+          resultEl.textContent = pick;
+          const arr = state.profiles[state.activeProfile] || (state.profiles[state.activeProfile]=[]);
+          arr.push({pick,time:Date.now()}); if(arr.length>120) arr.shift();
+          store.save(state); renderHistory();
+          if(pick.toLowerCase()==='putter'){ putterAnimation(); } else { confetti(); }
+          spinning=false;
+          if(navigator.vibrate) navigator.vibrate(30);
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    function confetti(){
+      // Colorful DOM confetti streamers
+      const N=220; const frag = document.createDocumentFragment();
+      const hues=[0,25,45,90,140,190,230,270,310];
+      for(let i=0;i<N;i++){
+        const s = document.createElement('div');
+        const x = Math.random()*100; const size = Math.random()*8+4; const dur = Math.random()*1400+1400;
+        s.style.position='fixed'; s.style.top='-12px'; s.style.left=x+'vw'; s.style.width=size+'px'; s.style.height=(Math.random()<.5? size : size*0.4)+'px';
+        const hue = hues[(Math.random()*hues.length)|0]; const sat = 85+Math.random()*15; const light = 50+Math.random()*20;
+        s.style.background=`hsl(${hue} ${sat}% ${light}%)`;
+        s.style.boxShadow='0 0 10px rgba(0,0,0,.25)'; s.style.opacity='.98';
+        s.style.borderRadius=Math.random()<.3?'999px':'2px'; s.style.transform=`translateY(0) rotate(${Math.random()*180}deg)`;
+        s.style.transition=`transform ${dur}ms cubic-bezier(.2,.8,.2,1), opacity ${dur}ms linear`;
+        frag.appendChild(s);
+        setTimeout(()=>{ s.style.transform=`translateY(${window.innerHeight+40}px) rotate(${(Math.random()*1440-720)}deg)`; s.style.opacity='0'; setTimeout(()=>s.remove(), dur+40); }, 12);
+      }
+      document.body.appendChild(frag);
+    }
+
+    function putterAnimation(){
+      // Animated curled poo falling and wobbling
+      const el = document.createElement('div');
+      el.textContent = '💩';
+      el.style.position='fixed'; el.style.left='50%'; el.style.top='-80px'; el.style.transform='translateX(-50%) scale(1)';
+      el.style.fontSize='72px'; el.style.filter='drop-shadow(0 6px 20px rgba(0,0,0,.35))'; el.style.zIndex=9999; el.style.pointerEvents='none';
+      document.body.appendChild(el);
+      const duration = 1800 + Math.random()*400;
+      const wobble = ()=>{
+        const x = (Math.sin(performance.now()/260)*40);
+        el.style.transform = `translateX(calc(-50% + ${x}px)) rotate(${Math.sin(performance.now()/180)*18}deg)`;
+        if(alive) requestAnimationFrame(wobble);
+      };
+      let alive=true; requestAnimationFrame(wobble);
+      setTimeout(()=>{ el.style.transition=`top ${duration}ms cubic-bezier(.2,.9,.2,1), opacity 400ms ease ${duration-300}ms`;
+        el.style.top = window.innerHeight - 120 + 'px';
+        setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>{ alive=false; el.remove(); }, 500); }, duration-300);
+      }, 20);
+    }
+
+    function fireworks(){
+      ensureFxCanvas();
+      const ctx = fxCtx; const dpr = FX_DPR; let running=true;
+      const particles=[]; const colors=['#ff595e','#ffca3a','#8ac926','#1982c4','#6a4c93','#ff3fb0','#29e3ff'];
+      function spawnBurst(cx,cy,count){
+        for(let i=0;i<count;i++){
+          const angle = Math.random()*TAU; const speed = 250 + Math.random()*260;
+          particles.push({
+            x:cx, y:cy, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed,
+            life:900+Math.random()*400, age:0, size:2+Math.random()*2.5, color:colors[(Math.random()*colors.length)|0]
+          });
+        }
+      }
+      const bursts = 3 + ((innerWidth>900)?2:0);
+      for(let b=0;b<bursts;b++){
+        const cx = (innerWidth*0.25 + Math.random()*innerWidth*0.5)*dpr;
+        const cy = (innerHeight*0.18 + Math.random()*innerHeight*0.18)*dpr;
+        setTimeout(()=>spawnBurst(cx,cy,120), b*220);
+      }
+      const gravity = 650; const drag = 0.98;
+      let last=performance.now();
+      function loop(now){
+        if(!running) return; const dt=(now-last)/1000; last=now;
+        ctx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+        ctx.globalCompositeOperation='lighter';
+        for(let i=particles.length-1;i>=0;i--){
+          const p=particles[i]; p.age+=dt*1000; if(p.age>p.life){ particles.splice(i,1); continue; }
+          p.vy += gravity*dt; p.vx*=drag; p.vy*=drag; p.x += p.vx*dt; p.y += p.vy*dt;
+          const alpha = 1 - (p.age/p.life);
+          ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, alpha);
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size*dpr, 0, TAU); ctx.fill();
+        }
+        ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+        if(particles.length===0){ running=false; ctx.clearRect(0,0,fxCanvas.width,fxCanvas.height); return; }
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    // =====================
+    //  Events
+    // =====================
+    document.getElementById('spinBtn').addEventListener('click', ()=>{ swingAndSpin(); });
+    function swingAndSpin(){
+      // Create a temporary SVG club that swings across the wheel
+      const wrap = document.querySelector('.wheel-wrap');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 320 120');
+      svg.setAttribute('class','swing-club');
+      const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+      const lg1 = document.createElementNS('http://www.w3.org/2000/svg','linearGradient'); lg1.id='swingShaft'; lg1.setAttribute('x1','0'); lg1.setAttribute('y1','0'); lg1.setAttribute('x2','1'); lg1.setAttribute('y2','1');
+      const s1 = document.createElementNS('http://www.w3.org/2000/svg','stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color','#e7eefc');
+      const s2 = document.createElementNS('http://www.w3.org/2000/svg','stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','#8fa2bf');
+      lg1.appendChild(s1); lg1.appendChild(s2);
+      const lg2 = document.createElementNS('http://www.w3.org/2000/svg','linearGradient'); lg2.id='swingHead'; lg2.setAttribute('x1','0'); lg2.setAttribute('y1','0'); lg2.setAttribute('x2','1'); lg2.setAttribute('y2','1');
+      const h1 = document.createElementNS('http://www.w3.org/2000/svg','stop'); h1.setAttribute('offset','0%'); h1.setAttribute('stop-color','#ffcf4d');
+      const h2 = document.createElementNS('http://www.w3.org/2000/svg','stop'); h2.setAttribute('offset','100%'); h2.setAttribute('stop-color','#ff8a1a');
+      lg2.appendChild(h1); lg2.appendChild(h2); defs.appendChild(lg1); defs.appendChild(lg2); svg.appendChild(defs);
+      const shaft = document.createElementNS('http://www.w3.org/2000/svg','rect'); shaft.setAttribute('x','138'); shaft.setAttribute('y','10'); shaft.setAttribute('width','12'); shaft.setAttribute('height','92'); shaft.setAttribute('rx','6'); shaft.setAttribute('fill','url(#swingShaft)');
+      const head = document.createElementNS('http://www.w3.org/2000/svg','path'); head.setAttribute('d','M144 102 C110 110 86 118 70 118 C50 118 38 106 50 98 C80 78 132 90 144 96 Z'); head.setAttribute('fill','url(#swingHead)'); head.setAttribute('stroke','#1f2b46'); head.setAttribute('stroke-width','6');
+      svg.appendChild(shaft); svg.appendChild(head); wrap.appendChild(svg);
+      setTimeout(()=>{ svg.remove(); spinAnimated(); }, 360);
+    }
+    document.getElementById('clearHistory').addEventListener('click', ()=>{
+      if(confirm(`Clear history for ${state.activeProfile}?`)){
+        state.profiles[state.activeProfile] = []; renderHistory(); store.save(state);
+      }
+    });
+    document.getElementById('resetBtn').addEventListener('click', ()=>{ if(confirm('Reset bag to default?')){ state.clubs = DEFAULT_CLUBS.map(n=>({name:n,on:true})); store.save(state); init(); }})
+    profileSelect.addEventListener('change', ()=>{ state.activeProfile = profileSelect.value; store.save(state); renderHistory(); })
+    document.getElementById('addCustom').addEventListener('click', ()=>{
+      const name = prompt('Add club name');
+      if(name && name.trim()){ state.clubs.push({name:name.trim(), on:true}); store.save(state); init(); toast('Added'); }
+    })
+
+    // Spin with Spacebar (ignore when typing in inputs)
+    window.addEventListener('keydown', (e)=>{
+      const isSpace = e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space';
+      const isTypingTarget = ['INPUT','TEXTAREA'].includes(e.target.tagName) || e.target.isContentEditable;
+      if(isSpace && !isTypingTarget && !e.repeat){ e.preventDefault(); spinAnimated(); }
+    });
+
+    clubList.addEventListener('change', (e)=>{
+      if(e.target.matches('input[type="checkbox"]')){
+        const ix = +e.target.dataset.ix; state.clubs[ix].on = e.target.checked; store.save(state); renderWheelBase(); drawWheel(currentRotation); renderList();
+      }
+    })
+    clubList.addEventListener('click', (e)=>{
+      const del = e.target.closest('button[data-del]');
+      const edit = e.target.closest('button[data-edit]');
+      if(del){ const ix = +del.dataset.del; const name=state.clubs[ix].name; if(confirm(`Remove ${name}?`)){ state.clubs.splice(ix,1); store.save(state); init(); }}
+      if(edit){ const ix = +edit.dataset.edit; const cur = state.clubs[ix].name; const next = prompt('Rename club', cur); if(next && next.trim()){ state.clubs[ix].name = next.trim(); store.save(state); init(); toast('Renamed'); }}
+    })
+
+    // Built‑in presets
+    document.querySelectorAll('[data-preset]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const p = btn.dataset.preset;
+        const setOn = (names)=> state.clubs = DEFAULT_CLUBS.map(n=>({name:n,on:names.includes(n)}));
+        if(p==='full') setOn(DEFAULT_CLUBS);
+        if(p==='irons') setOn(["4i","5i","6i","7i","8i","9i","PW"]);
+        if(p==='wedges') setOn(["PW","50°","54°","58°"]);
+        if(p==='putter') setOn(["Putter"]);
+        store.save(state); renderList(); renderWheelBase(); drawWheel(currentRotation);
+      })
+    })
+
+
+
+    // Custom presets
+    savePresetBtn.addEventListener('click', ()=>{
+      const name = (presetNameInput.value||'').trim();
+      if(!name){ toast('Name your preset'); return; }
+      const names = getActiveClubs(); if(names.length===0){ toast('Select at least one club'); return; }
+      const existingIx = state.customPresets.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
+      const entry = {name, names}; if(existingIx>=0) state.customPresets[existingIx]=entry; else state.customPresets.push(entry);
+      store.save(state); renderCustomPresets(); toast('Preset saved');
+    })
+
+    customPresetsEl.addEventListener('click', (e)=>{
+      const applyBtn = e.target.closest('button.btn:not(.danger)');
+      const delBtn = e.target.closest('button.danger');
+      if(applyBtn && applyBtn.dataset.customPreset!=null){
+        const ix = +applyBtn.dataset.customPreset; const p = state.customPresets[ix];
+        const setOn = (names)=> state.clubs = DEFAULT_CLUBS.map(n=>({name:n,on:names.includes(n)}));
+        setOn(p.names); store.save(state); init(); toast('Preset applied');
+      }
+      if(delBtn && delBtn.dataset.delPreset!=null){
+        const ix = +delBtn.dataset.delPreset; state.customPresets.splice(ix,1); store.save(state); renderCustomPresets(); toast('Preset removed');
+      }
+    })
+
+    // =====================
+    //  Init
+    // =====================
+    function init(){
+      try{ statusEl.textContent = 'Status: OK'; }catch(e){}
+      renderList(); renderHistory(); renderCustomPresets(); renderWheelBase(); drawWheel(currentRotation);
+      updateStats();
+    }
+    init();
+  </script>
+  
+</body>
+</html>
+image.png
